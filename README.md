@@ -1,3 +1,3 @@
 # SwiftFSM
 
-A description of this package.
+A simple finite state machine package for swift.
