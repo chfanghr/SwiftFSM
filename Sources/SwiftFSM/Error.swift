@@ -24,7 +24,7 @@ extension FSM {
 		case notInTransition
 		/// No transition have happened but callback throws.
 		/// For example if the source and destination states are the same.
-		/// - error: The error thrown from the callback ffunction.
+		/// - error: The error thrown from the callback function.
 		case noTransition(error: Error?)
 		/// A callback have canceled a transition with error.
 		/// - error: The error thrown from the callback function.
@@ -32,8 +32,10 @@ extension FSM {
 		/// The machine have already in an asynchronous transition.
 		/// - error: The error thrown from the callback function.
 		case async(error: Error?)
+        /// Given state is not existed in the machine.
+        /// - state: The invalid state.
 		case unknownState(state: String)
-		/// Internal error and should never occured.
+		/// Internal error and should never occurred.
 		case unknown
 
 		public var description: String {

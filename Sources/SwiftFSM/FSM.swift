@@ -97,6 +97,7 @@ public class FSM {
     /// The state that the FSM is currently in.
     private(set) var currentState: String
 
+    /// The predefined initial state of the machine.
     public let initialState: String
 
     /// Dictionary which maps events and source states to destination states.
@@ -113,6 +114,7 @@ public class FSM {
 
     private let dispatchQueue = DispatchQueue.global()
 
+    /// All valid states of the machine.
     public var allStates: Set<String> {
         var states = Set<String>()
 
@@ -126,6 +128,7 @@ public class FSM {
         return states
     }
 
+    /// All events of the machine.
     public var allEvents: Set<String> {
         var events = Set<String>()
 
@@ -269,6 +272,28 @@ public class FSM {
         self.callbacks = finalCallbacks
     }
 
+    
+    /// Initiates a state transition with the named event.
+    ///
+    /// The call takes a variable number of arguments that will be passed to the
+    /// callback, if defined.
+    ///
+    /// It will return nil if the state change is ok or one of these errors:
+    ///
+    /// - `event` inappropriate because previous transition did not complete
+    ///
+    /// - `event` inappropriate in current state Y
+    ///
+    /// - `event` does not exist
+    ///
+    /// - internal error on state transition
+    ///
+    /// The last error should never occur in this situation and is a sign of an
+    /// internal bug.
+    ///
+    /// - Parameters:
+    ///     - event: Event to be raised.
+    ///     - args: Arguments for callback functions.
     public func fire(event: String, _ args: Any...) -> Error? {
         dispatchQueue.sync {
             if transition != nil {
@@ -320,12 +345,14 @@ public class FSM {
         }
     }
 
+    /// Completes the pending async transition.
     public func completeTransition() -> Error? {
         dispatchQueue.sync {
             doTransition()
         }
     }
 
+    /// Indicates whether the given event can be raised in current state or not.
     public func can(fire event: String) -> Bool {
         dispatchQueue.sync {
             transition == nil && transitions[Key.Event(event: event, src: currentState)] != nil
@@ -333,6 +360,8 @@ public class FSM {
     }
 
 
+    /// Allows users to move to the given state from current state.
+    /// The give state must be vaild for the machine.
     public func set(current state: String) -> Error? {
         if !allStates.contains(state) {
             return FSMError.unknownState(state: state)
@@ -346,6 +375,7 @@ public class FSM {
         }
     }
 
+    /// The current state of the machine.
     public func current() -> String {
         dispatchQueue.sync {
             currentState
@@ -358,6 +388,7 @@ public class FSM {
         }
     }
 
+    /// Set the machine's state to initialState.
     public func reset() {
         dispatchQueue.sync {
             transition = nil
