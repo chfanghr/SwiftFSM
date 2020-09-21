@@ -29,7 +29,7 @@ extension FSM {
 		private(set) var error: Error? = nil
 
 		/// An internal flag set if the transition is canceled.
-		private(set) var async: Bool = false
+		private(set) var isAsync: Bool = false
 
 		/// An internal flag set if the transition should be asynchronous.
 		private(set) var canceled: Bool = false
@@ -41,11 +41,10 @@ extension FSM {
 			self.dst = dst
 		}
 
-		/// Cancel can be called in before_*EVENT* or leave_*STATE* to cancel the
+		/// Can be called in before_*EVENT* or leave_*STATE* to cancel the
 		/// current transition before it happens. It takes an optional error, which will
 		/// overwrite `self.error`  if set before.
-		//
-		func Cancel(error: Error? = nil) {
+		public func cancel(error: Error? = nil) {
 			if canceled {
 				return
 			}
@@ -53,13 +52,13 @@ extension FSM {
 			self.error = error
 		}
 
-		/// Async can be called in leave_*STATE* to do an asynchronous state transition.
+		/// Can be called in leave_*STATE* to do an asynchronous state transition.
 		///
 		/// The current state transition will be on hold in the old state until a final
 		/// call to Transition is made. This will comlete the transition and possibly
 		/// call the other callbacks.
-		func Async() {
-			async = true
+		public func async() {
+			isAsync = true
 		}
     
         public var description: String{

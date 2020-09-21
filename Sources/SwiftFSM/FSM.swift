@@ -435,7 +435,7 @@ public class FSM {
             callback(event)
             if event.canceled {
                 return FSMError.canceledEvent(error: event.error)
-            } else if event.async {
+            } else if event.isAsync {
                 return FSMError.async(error: event.error)
             }
         }
@@ -443,7 +443,7 @@ public class FSM {
             callback(event)
             if event.canceled {
                 return FSMError.canceledEvent(error: event.error)
-            } else if event.async {
+            } else if event.isAsync {
                 return FSMError.async(error: event.error)
             }
         }
