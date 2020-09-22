@@ -364,8 +364,8 @@ public class FSM {
     }
 
 
-    /// Allows users to move to the given state from current state.
-    /// The give state must be vaild for the machine.
+    /// Allows users to move to the given state from the current state.
+    /// The given state must be vaild for the machine.
     public func set(current state: String) -> Error? {
         if !allStates.contains(state) {
             return FSMError.unknownState(state: state)
