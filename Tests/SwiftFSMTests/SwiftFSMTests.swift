@@ -96,11 +96,128 @@ final class SwiftFSMTests: XCTestCase {
 		while waitGroup.value != 0 { }
 	}
 
+    func testAsync() {
+        let machine=FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "run", destination: "end")
+        ], callbacks: [
+            "leave_start" : { event in
+                event.async()
+            }
+        ])
+        
+        XCTAssertEqual(machine.current(), "start")
+        guard let err=machine.fire(event: "run") else {
+            XCTFail("should generate error")
+            return
+        }
+        XCTAssert(err is FSM.FSMError)
+        let fsmError=err as! FSM.FSMError
+        guard case let FSM.FSMError.async(error) = fsmError else{
+            XCTFail("should be async FSMError")
+            return
+        }
+        XCTAssertEqual(machine.current(), "start")
+        XCTAssertNil(error)
+        XCTAssertNil(machine.completeTransition())
+        XCTAssertEqual(machine.current(), "end")
+    }
+    
+    func testLeaveStateCallback(){
+        sync{ // callback for specific state
+            var callbackGetCalled:Bool=false
+            
+            let machine=FSM(initial: "start", events: [
+                FSM.EventDesc(source: "start", event: "run", destination: "end")
+            ], callbacks: [
+                "leave_start": { event in
+                    XCTAssertEqual(event.event, "run")
+                    XCTAssertEqual(event.src, "start")
+                    XCTAssertEqual(event.dst, "end")
+                    
+                    callbackGetCalled=true
+                }
+            ])
+            
+            
+            XCTAssertFalse(callbackGetCalled)
+            XCTAssertEqual(machine.current(), "start")
+            XCTAssertNil(machine.fire(event: "run"))
+            XCTAssertTrue(callbackGetCalled)
+            XCTAssertEqual(machine.current(), "end")
+        }
+        sync{ // callback for all states
+            var counter = 0
+            
+            let machine=FSM(initial: "off", events: [
+                FSM.EventDesc(source: "on", event: "toggle", destination: "off"),
+                FSM.EventDesc(source: "off", event: "toggle", destination: "on")
+            ], callbacks: [
+                "leave_state": { event in
+                    XCTAssertEqual(event.event, "toggle")
+                    if counter%2==0{ // off
+                        XCTAssertEqual(event.src, "off")
+                        XCTAssertEqual(event.dst, "on")
+                    }else{
+                        XCTAssertEqual(event.src, "on")
+                        XCTAssertEqual(event.dst, "off")
+                    }
+                    counter+=1
+                }
+            ])
+            
+            for i in 0...100{
+                XCTAssertEqual(i, counter)
+                XCTAssertNil(machine.fire(event: "toggle"))
+            }
+        }
+        sync{ // callback for both
+            var onCounter = 0
+            var allCounter = 0
+            
+            
+            let machine=FSM(initial: "off", events: [
+                FSM.EventDesc(source: "on", event: "toggle", destination: "off"),
+                FSM.EventDesc(source: "off", event: "toggle", destination: "on")
+            ], callbacks: [
+                "leave_state": { event in
+                    XCTAssertEqual(event.event, "toggle")
+                    if allCounter%2==0{ // off
+                        XCTAssertEqual(event.src, "off")
+                        XCTAssertEqual(event.dst, "on")
+                    }else{
+                        XCTAssertEqual(event.src, "on")
+                        XCTAssertEqual(event.dst, "off")
+                    }
+                    allCounter+=1
+                },
+                "leave_on" : { event in
+                    XCTAssertEqual(event.event, "toggle")
+                    XCTAssertEqual(event.src, "on")
+                    
+                    onCounter+=1
+                    XCTAssertEqual(event.dst, "off")
+                }
+            ])
+            
+            for i in 0...100{
+                XCTAssertEqual(i, allCounter)
+                XCTAssertEqual(i/2, onCounter)
+                XCTAssertNil(machine.fire(event: "toggle"))
+            }
+        }
+    }
+    
+    func testAfterEventCallback(){
+        
+    }
+    
 	static var allTests = [
 		("testSameState", testSameState),
 		("testSetState", testSetState),
 		("testInappropriateEvent", testInappropriateEvent),
 		("testUnknownEvent", testUnknownEvent),
-		("testDoubleTransition", testDoubleTransition)
+		("testDoubleTransition", testDoubleTransition),
+        ("testAsync", testAsync),
+        ("testLeaveStateCallback", testLeaveStateCallback)
 	]
 }

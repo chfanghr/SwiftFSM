@@ -40,3 +40,11 @@ class Atomic<T> {
 		_value = job(_value)
 	}
 }
+
+func sync<R>(_ job: ()->R) ->R{
+    job()
+}
+
+func sync<R>(_ job: () throws->R) throws ->R{
+    try job()
+}
