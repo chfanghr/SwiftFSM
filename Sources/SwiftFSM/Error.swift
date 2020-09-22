@@ -32,8 +32,8 @@ extension FSM {
 		/// The machine have already in an asynchronous transition.
 		/// - error: The error thrown from the callback function.
 		case async(error: Error?)
-        /// Given state is not existed in the machine.
-        /// - state: The invalid state.
+		/// Given state is not existed in the machine.
+		/// - state: The invalid state.
 		case unknownState(state: String)
 		/// Internal error and should never occurred.
 		case unknown

@@ -9,7 +9,7 @@ import Foundation
 
 extension FSM {
 	/// The info that get passed as a reference to callbacks in the collection.
-    public class Event: CustomStringConvertible{
+	public class Event: CustomStringConvertible {
 		/// A reference to the current FSM.
 		public var machine: FSM
 
@@ -60,9 +60,9 @@ extension FSM {
 		public func async() {
 			isAsync = true
 		}
-    
-        public var description: String{
-            "\(src)--|\(event)|-->\(dst) (args=\(args)) (err=\(String(describing: error)))"
-        }
+
+		public var description: String {
+			"\(src)--|\(event)|-->\(dst) (args=\(args)) (err=\(String(describing: error)))"
+		}
 	}
 }
