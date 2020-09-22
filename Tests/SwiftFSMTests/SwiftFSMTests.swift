@@ -72,18 +72,21 @@ final class SwiftFSMTests: XCTestCase {
 			],
 			callbacks: [
 				"before_run": { event in
-					waitGroup.sync {
-						$0 - 1
-					}
+					waitGroup.sync { $0 - 1 }
+					// Imagine a concurrent event coming in of the same type while
+					// the data access mutex is unlocked because the current transition
+					// is running is event callbacks, getting around the "active"
+					// transition checks.
 					if event.args.isEmpty {
+						// Must be concurrent so the test may pass when we add a mutex that synchronizes
+						// calls to machine.fire(event:args...). It will then fail as an inappropriate transition as we
+						// have changed state.
 						DispatchQueue.global().async {
-							_ = machine!.fire(event: "run", "second run")
-							waitGroup.sync {
-								$0 - 1
-							}
+							XCTAssertNotNil(machine!.fire(event: "run", "second run"))
+							waitGroup.sync { $0 - 1 }
 						}
 					} else {
-						XCTFail() // Able to reissue an event mid-transition
+						XCTFail("Able to reissue an event mid-transition")
 					}
 				}
 			])
@@ -100,38 +103,4 @@ final class SwiftFSMTests: XCTestCase {
 		("testUnknownEvent", testUnknownEvent),
 		("testDoubleTransition", testDoubleTransition)
 	]
-}
-
-class Atomic<T> {
-	private var _value: T
-	private let lock: NSLock = NSLock()
-
-	init(_ value: T) {
-		self._value = value
-	}
-
-	public var value: T {
-		get {
-			lock.lock()
-			defer {
-				lock.unlock()
-			}
-			return _value
-		}
-		set {
-			lock.lock()
-			defer {
-				lock.unlock()
-			}
-			_value = newValue
-		}
-	}
-
-	func sync(_ job: (_ value: T) -> T) {
-		lock.lock()
-		defer {
-			lock.unlock()
-		}
-		_value = job(_value)
-	}
 }
