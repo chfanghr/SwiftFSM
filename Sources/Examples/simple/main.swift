@@ -7,22 +7,15 @@
 
 import Foundation
 import SwiftFSM
+import ExampleUtilities
 
 let machine=FSM(initial: "closed", events: [
-    FSM.EventDesc(sources: ["closed"], event: "open", destination: "open"),
-    FSM.EventDesc(sources: ["open"], event: "close", destination: "closed")
+    FSM.EventDesc(source: "closed", event: "open", destination: "open"),
+    FSM.EventDesc(source: "open", event: "close", destination: "closed")
 ])
 
 print(machine.current())
-
-if let err=machine.fire(event: "open"){
-    fatalError("unexpected error: \(err)")
-}
-
+notExpectError(machine.fire(event: "open"))
 print(machine.current())
-
-if let err=machine.fire(event: "close"){
-    fatalError("unexpected error: \(err)")
-}
-
+notExpectError(machine.fire(event: "close"))
 print(machine.current())

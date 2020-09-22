@@ -7,11 +7,18 @@
 
 import Foundation
 import SwiftFSM
+import ExampleUtilities
 
 let machine = FSM(initial: "start", events: [
-    FSM.EventDesc(sources: ["start"], event: "run", destination: "end"),
+    FSM.EventDesc(source: "start", event: "run", destination: "end"),
 ],callbacks:[
     "leave_start" : { event in
         event.async()
     }
 ])
+
+print(machine.current())
+expectError(machine.fire(event: "run"))
+print(machine.current())
+notExpectError(machine.completeTransition())
+print(machine.current())

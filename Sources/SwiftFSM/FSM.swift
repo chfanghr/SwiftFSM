@@ -92,6 +92,10 @@ public class FSM {
             self.sources = sources
             self.destination = destination
         }
+        
+        public init(source: String, event:String, destination:String){
+            self.init(sources: [source], event: event, destination: destination)
+        }
     }
 
     /// The state that the FSM is currently in.
