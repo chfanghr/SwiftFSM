@@ -61,10 +61,77 @@ final class SwiftFSMTests: XCTestCase {
 		XCTAssertEqual(event, "lock")
 	}
 
+	func testDoubleTransition() {
+		var machine: FSM? = nil
+
+		let waitGroup = Atomic<Int>(2)
+
+		machine = FSM(initial: "start",
+			events: [
+				FSM.EventDesc(source: "start", event: "run", destination: "end")
+			],
+			callbacks: [
+				"before_run": { event in
+					waitGroup.sync {
+						$0 - 1
+					}
+					if event.args.isEmpty {
+						DispatchQueue.global().async {
+							_ = machine!.fire(event: "run", "second run")
+							waitGroup.sync {
+								$0 - 1
+							}
+						}
+					} else {
+						XCTFail() // Able to reissue an event mid-transition
+					}
+				}
+			])
+
+		XCTAssertNil(machine!.fire(event: "run"))
+
+		while waitGroup.value != 0 { }
+	}
+
 	static var allTests = [
 		("testSameState", testSameState),
 		("testSetState", testSetState),
 		("testInappropriateEvent", testInappropriateEvent),
-		("testUnknownEvent", testUnknownEvent)
+		("testUnknownEvent", testUnknownEvent),
+		("testDoubleTransition", testDoubleTransition)
 	]
+}
+
+class Atomic<T> {
+	private var _value: T
+	private let lock: NSLock = NSLock()
+
+	init(_ value: T) {
+		self._value = value
+	}
+
+	public var value: T {
+		get {
+			lock.lock()
+			defer {
+				lock.unlock()
+			}
+			return _value
+		}
+		set {
+			lock.lock()
+			defer {
+				lock.unlock()
+			}
+			_value = newValue
+		}
+	}
+
+	func sync(_ job: (_ value: T) -> T) {
+		lock.lock()
+		defer {
+			lock.unlock()
+		}
+		_value = job(_value)
+	}
 }
