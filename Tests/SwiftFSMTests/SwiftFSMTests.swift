@@ -207,9 +207,6 @@ final class SwiftFSMTests: XCTestCase {
         }
     }
     
-    func testAfterEventCallback(){
-    }
-    
     func testNoTransition(){
         let machine = FSM(initial: "start", events: [
             FSM.EventDesc(source: "start", event: "run", destination: "start")
@@ -241,6 +238,82 @@ final class SwiftFSMTests: XCTestCase {
         XCTAssertEqual(machine.current(), "end")
     }
     
+    func testCallbackArgs(){
+        let machine = FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "run", destination: "end")
+        ], callbacks: [
+            "run": { event in
+                XCTAssertEqual(event.args.count, 1)
+                XCTAssertNotNil(event.args.first)
+                XCTAssertTrue(event.args.first! is String)
+            }
+        ])
+        
+        XCTAssertNil(machine.fire(event: "run", "test"))
+    }
+    
+    func testMultipleSources(){
+        let machine = FSM(initial: "one", events: [
+            FSM.EventDesc(source: "one", event: "first", destination: "two"),
+            FSM.EventDesc(source: "two", event: "second", destination: "three"),
+            FSM.EventDesc(sources: [
+                "one", "two", "three"
+            ], event: "reset", destination: "one")
+        ])
+        
+        XCTAssertNil(machine.fire(event: "first"))
+        XCTAssertEqual(machine.current(), "two")
+        XCTAssertNil(machine.fire(event: "reset"))
+        XCTAssertEqual(machine.current(), "one")
+        XCTAssertNil(machine.fire(event: "first"))
+        XCTAssertEqual(machine.current(), "two")
+        XCTAssertNil(machine.fire(event: "second"))
+        XCTAssertEqual(machine.current(), "three")
+        XCTAssertNil(machine.fire(event: "reset"))
+        XCTAssertEqual(machine.current(), "one")
+    }
+    
+    func testMultipleEvents(){
+        let machine = FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "first", destination: "one"),
+            FSM.EventDesc(source: "start", event: "second", destination: "two"),
+            FSM.EventDesc(source: "one", event: "reset", destination: "reset_one"),
+            FSM.EventDesc(source: "two", event: "reset", destination: "reset_two"),
+            FSM.EventDesc(sources: [
+                "reset_one", "reset_two"
+            ], event: "reset", destination: "start")
+        ])
+        
+        XCTAssertNil(machine.fire(event: "first"))
+        XCTAssertEqual(machine.current(), "one")
+        XCTAssertNil(machine.fire(event: "reset"))
+        XCTAssertEqual(machine.current(), "reset_one")
+        XCTAssertNil(machine.fire(event: "reset"))
+        XCTAssertEqual(machine.current(), "start")
+    }
+    
+    func testGenericCallbacks(){
+        var beforeEvent = false
+        var afterEvent = false
+        var enterState = false
+        var leaveState = false
+        
+        let machine = FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "run", destination: "end")
+        ], callbacks: [
+            "before_event": { _ in beforeEvent = true },
+            "after_event": { _ in afterEvent = true },
+            "enter_state": { _ in enterState = true },
+            "leave_state": { _ in leaveState = true },
+        ])
+        
+        XCTAssertNil(machine.fire(event: "run"))
+        XCTAssertTrue(beforeEvent)
+        XCTAssertTrue(afterEvent)
+        XCTAssertTrue(enterState)
+        XCTAssertTrue(leaveState)
+    }
+    
 	static var allTests = [
 		("testSameState", testSameState),
 		("testSetState", testSetState),
@@ -249,6 +322,9 @@ final class SwiftFSMTests: XCTestCase {
 		("testDoubleTransition", testDoubleTransition),
         ("testAsync", testAsync),
         ("testLeaveStateCallback", testLeaveStateCallback),
-        ("testNoTransition", testNoTransition)
+        ("testNoTransition", testNoTransition),
+        ("testCallbackArgs", testCallbackArgs),
+        ("testMultipleSources", testMultipleSources),
+        ("testGenericCallbacks",  testGenericCallbacks)
 	]
 }
