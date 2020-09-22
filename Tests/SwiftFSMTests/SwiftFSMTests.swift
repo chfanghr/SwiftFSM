@@ -208,7 +208,37 @@ final class SwiftFSMTests: XCTestCase {
     }
     
     func testAfterEventCallback(){
+    }
+    
+    func testNoTransition(){
+        let machine = FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "run", destination: "start")
+        ])
         
+        guard let err = machine.fire(event: "run") else{
+            XCTFail("expect error but got nothing")
+            return
+        }
+        
+        guard case let FSM.FSMError.noTransition(nestedError) = err else {
+            XCTFail("expect no transition error but got other wise")
+            return
+        }
+        
+        XCTAssertNil(nestedError)
+    }
+    
+    func testNoDeadlock(){
+        let machine = FSM(initial: "start", events: [
+            FSM.EventDesc(source: "start", event: "run", destination: "end")
+        ], callbacks: [
+            "run": { event in
+                _ = event.machine.current() // Should not result in deadlock
+            }
+        ])
+        
+        XCTAssertNil(machine.fire(event: "run"))
+        XCTAssertEqual(machine.current(), "end")
     }
     
 	static var allTests = [
@@ -218,6 +248,7 @@ final class SwiftFSMTests: XCTestCase {
 		("testUnknownEvent", testUnknownEvent),
 		("testDoubleTransition", testDoubleTransition),
         ("testAsync", testAsync),
-        ("testLeaveStateCallback", testLeaveStateCallback)
+        ("testLeaveStateCallback", testLeaveStateCallback),
+        ("testNoTransition", testNoTransition)
 	]
 }

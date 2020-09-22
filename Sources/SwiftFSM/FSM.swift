@@ -116,7 +116,7 @@ public class FSM {
 
 	private let transitioner = Transitioner()
 
-    private let dispatchQueue = DispatchQueue.init(label: "FSM_\(Int.random(in: Int.min...Int.max))")
+    private let dispatchQueue = DispatchQueue.init(label: "FSM_\(Int.random(in: Int.min...Int.max))", attributes: .concurrent)
 
 	/// All valid states of the machine.
 	public var allStates: Set<String> {
