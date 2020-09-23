@@ -15,7 +15,7 @@ jobs:
         run: swift build -c release
       - name: Run Package Tests
         run: swift test 
-      - uses: actions/upload-artifacts@v2
+      - uses: actions/upload-artifact@v2
         with:
           name: Linux Build Artifact
           path: .build/
