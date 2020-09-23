@@ -1,0 +1,21 @@
+name: linux
+on: [push]
+
+jobs: 
+  build-and-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: sersoft-gmbh/SwiftyActions@v1
+        with: 
+          release-version: 5.3
+      - name: Build SwiftFSM
+        run: swift build
+      - name: Build SwiftFSM(release)
+        run: swift build -c release
+      - name: Run Package Tests
+        run: swift test 
+      - uses: actions/upload-artifacts@v2
+        with:
+          name: Linux Build Artifact
+          path: .build/
