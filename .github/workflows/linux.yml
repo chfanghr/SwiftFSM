@@ -15,6 +15,16 @@ jobs:
         run: swift build -c release
       - name: Run Package Tests
         run: swift test 
+      - name: Generate Documentation
+        uses: SwiftDocOrg/swift-doc@master
+        with: 
+          module-name: SwiftFSM   
+      - name: Upload Documentation to Github Wiki
+        uses: SwiftDocOrg/github-wiki-publish-action@v1
+        with:
+          path: .build/documentation
+        env:
+          GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }} 
       - uses: actions/upload-artifact@v2
         with:
           name: Linux Build Artifact
